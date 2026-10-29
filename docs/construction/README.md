@@ -20,7 +20,7 @@
 | DT-2 | 图纸：核心的设计 01、21（X9 桌面端）；网页的 `web/architecture.md`「宿主」改成薄封装；这里的 `docs/blueprint/desktop.md` | 三个仓库 | 待做 |
 | DT-3 | 外壳：单实例、开窗口拿网址、接住外链和下载、记住窗口大小、关窗口藏进托盘、托盘菜单；CI 三平台编译、clippy、测试 | 这里 | 待做，等 W-978 和核心照转 `--format`、`--ticket` |
 | DT-4 上 | 核心：`.app` 里也找得到资源目录（上一级下的 `Resources/miyu/`，照能力找，不判 macOS）。施工单 `DT-4上-app资源目录.md` | 核心 | 已完成 |
-| DT-4 下 | 核心：方法 `core.stop`，只给本机令牌连上的，回应以后照「收到停的信号」收尾（`stopped reason=request`）；命令行入口 `miyu core stop` 由核心的 CL 线加，外壳调它。浏览器标签页还开着的会重连、把核心再拉起来，当成可以接受 | 核心 | 待做 |
+| DT-4 下 | 核心：方法 `core.stop`，只给本机令牌连上的，回应以后照「收到停的信号」收尾（`stopped reason=request`）；命令行入口 `miyu core stop` 由核心的 CL 线加，外壳调它。浏览器标签页还开着的会重连、把核心再拉起来，当成可以接受。施工单 `DT-4下-叫核心停下.md` | 核心 | 已完成 |
 | DT-5 | 图标：应用图标、小图标、托盘图标三套，从一份矢量稿出 | 这里 | 待做 |
 | DT-6 | 打包和发版：Linux 的 deb、rpm、AUR，Windows 的 NSIS，macOS 的 dmg；钉核心、网页软件的版本 | 这里 | 待做 |
 
