@@ -183,6 +183,7 @@ fn tell(app: &AppHandle, text: &Text, message: &str, retry: bool) -> bool {
         .kind(MessageDialogKind::Error)
         .buttons(buttons)
         .blocking_show();
+    log::line(&format!("error dialog closed, first button: {pressed_ok}"));
     retry && pressed_ok
 }
 
