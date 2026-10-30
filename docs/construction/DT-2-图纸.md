@@ -1,6 +1,6 @@
 ## DT-2：图纸，桌面端照薄封装写进三个仓库
 
-状态：在做（2026-10-30）。这里的 `docs/blueprint/desktop.md` 起好了；核心那一半 2026-10-30 合进核心的 main（`git log --grep DT-2`）；网页的「宿主」一节交网页的会话过目，等回。
+状态：已完成（2026-10-30）。三个仓库的图纸都合进各自的 main（`git log --grep DT-2`）：这里的 `docs/blueprint/desktop.md`；核心的设计 01、12、21；网页的 `web/architecture.md`「宿主」、`web.md`、`web-ui.md`（网页的会话审过、三平台 CI 绿）。
 
 ### 目的
 
@@ -29,4 +29,4 @@
 
 ### 风险
 
-- macOS 的 WKWebView 没有 `Notification`：图纸里先写「DT-3 出试验包再定」，可能要网页的 `served.js` 补一种办法。
+- macOS 的 WKWebView 没有 `Notification`：图纸里先写「待定」（网页的会话 2026-10-30 定，macOS、Windows 都等 DT-3 实测了再写），可能要网页的 `served.js` 补一种办法。
