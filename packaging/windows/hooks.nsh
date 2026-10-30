@@ -1,12 +1,21 @@
 ; Windows 安装包的钩子（施工 DT-6；核心的主会话 2026-10-30 定，设计 11 A3）。安装包照 perMachine 提权跑，这几条都有管理员。
 ; 沙盒：装时 `miyu sandbox setup` 建沙盒用户，卸时 `miyu sandbox remove`。失败不挡安装（核心照「沙盒用不了」那一套照常跑），
-; 原话留在安装日志里（nsExec::ExecToLog）。装、卸之前先叫在跑的核心停（`miyu core stop`），不然 miyu.exe 被占着换不掉。
+; 原话留在安装日志里（nsExec::ExecToLog）。
+; 装、卸之前先把在跑的停掉，不然程序被占着换不掉、删不掉（项目主人 2026-10-30 在虚拟机上碰到 miyu-web.exe 写不进去）：核心照
+; `miyu core stop` 停；网页软件没有停的命令（它空闲 10 分钟自己退），和停不下来的核心一起，照路径只结束这个安装目录下的。
 
-!macro NSIS_HOOK_PREINSTALL
+!macro MIYU_STOP_RUNNING
   IfFileExists "$INSTDIR\miyu.exe" 0 +4
     DetailPrint "miyu core stop"
     nsExec::ExecToLog '"$INSTDIR\miyu.exe" core stop'
     Pop $0
+  DetailPrint "stop programs under $INSTDIR"
+  nsExec::ExecToLog `powershell -NoProfile -NonInteractive -Command "Get-Process miyu-web,miyu,miyu-extract,miyu-sandbox -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like '$INSTDIR\*' } | ForEach-Object { 'stop ' + $$_.Id + ' ' + $$_.Path; Stop-Process -Id $$_.Id -Force }"`
+  Pop $0
+!macroend
+
+!macro NSIS_HOOK_PREINSTALL
+  !insertmacro MIYU_STOP_RUNNING
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
@@ -17,9 +26,7 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-  DetailPrint "miyu core stop"
-  nsExec::ExecToLog '"$INSTDIR\miyu.exe" core stop'
-  Pop $0
+  !insertmacro MIYU_STOP_RUNNING
   DetailPrint "miyu sandbox remove"
   nsExec::ExecToLog '"$INSTDIR\miyu.exe" sandbox remove'
   Pop $0
