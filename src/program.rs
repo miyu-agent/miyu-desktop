@@ -16,8 +16,9 @@ use crate::navigate::Origin;
 pub const OPEN: &[&str] = &["web", "--print", "--format", "json", "--ticket"];
 /// 彻底退出时叫核心停的那一句。
 pub const STOP: &[&str] = &["core", "stop"];
-/// 要网址最多等多久：第一次要先拉起核心和网页软件。
-pub const OPEN_LIMIT: Duration = Duration::from_secs(30);
+/// 要网址最多等多久：第一次要先拉起核心和网页软件；刚装完的 Windows 上 Defender 先扫一遍新程序，30 秒不够（项目主人
+/// 2026-10-31 在虚拟机上碰到，定 60 秒）。
+pub const OPEN_LIMIT: Duration = Duration::from_secs(60);
 /// 叫核心停最多等多久：`miyu core stop` 自己最多等 60 秒。
 pub const STOP_LIMIT: Duration = Duration::from_secs(70);
 /// 出错时带回标准错误的最后几行。

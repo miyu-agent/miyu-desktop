@@ -70,6 +70,10 @@ def main():
     (package / 'package.toml').write_text(manifest, encoding='utf-8')
     shutil.copy2(source / 'web.json', package / 'web.json')
     shutil.copytree(source / 'matugen', package / 'matugen')
+    # 网页包根上的这几个有就带：桌面端的等待页（W-1032）、第三方许可证清单（DT-7）。
+    for name in ('loading.html', 'THIRD-PARTY-LICENSES.txt'):
+        if (source / name).is_file():
+            shutil.copy2(source / name, package / name)
     for name in PAGES:
         page = args.web / 'web-demo' / name
         if page.is_dir():

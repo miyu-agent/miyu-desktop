@@ -37,7 +37,7 @@
 
 1. **起来**：单实例（`tauri-plugin-single-instance`）。已经有一个在跑的，第二次开只叫那一个把窗口拿出来、放到最前，自己退出（退出码 0）。没有托盘的桌面（GNOME 默认不显示托盘）靠这一条叫回窗口：再点一次应用图标。
 2. **找主程序**：先看环境变量 `MIYU_PROGRAM`（开发时指到别处，和网页软件找主程序同一个名字）；再看外壳自己所在的目录里有没有 `miyu`（Windows 是 `miyu.exe`）；都没有的照 `PATH` 找。安装包里三样放在同一个目录（「装在哪」）。找不到的弹一个系统对话框「找不到 Miyu 的主程序」，只有「退出」。
-3. **开窗口**：先建窗口（标题 `Miyu`，大小、位置照上次的，`tauri-plugin-window-state`；第一次照主屏的七成五、不小于 1100×760、不超过屏幕的九成，居中（项目主人 2026-10-30：1200×800 在大屏幕上左栏显得太宽）；量不出主屏的 1200×800），网页视图先空着；调 `miyu web --print --format json --ticket`（不开控制台窗口：Windows 上 `CREATE_NO_WINDOW`；最多等 30 秒），拿到网址就导航过去。每次新开窗口现要一次，不存网址、不存票：票一次性，页面用票连上以后自己在这个网页视图里存设备令牌，刷新照它进。
+3. **开窗口**：先建窗口（标题 `Miyu`，大小、位置照上次的，`tauri-plugin-window-state`；第一次照主屏的七成五、不小于 1100×760、不超过屏幕的九成，居中（项目主人 2026-10-30：1200×800 在大屏幕上左栏显得太宽）；量不出主屏的 1200×800），网页视图先开等待页（`waiting.rs`：网页包带的 `loading.html`，欢迎页那个能动的字符画剪影，网页 W-1032；把 `{{starting}}` 换成这种语言的「正在启动 Miyu…」；读不到的放一行字；都作为 `data:` 页面）；调 `miyu web --print --format json --ticket`（不开控制台窗口：Windows 上 `CREATE_NO_WINDOW`；最多等 60 秒（刚装完的 Windows 上 Defender 先扫新程序，30 秒不够；项目主人 2026-10-31 定）），拿到网址就导航过去。每次新开窗口现要一次，不存网址、不存票：票一次性，页面用票连上以后自己在这个网页视图里存设备令牌，刷新照它进。
    - 退出码非 0、超时、读不出那一行的：弹对话框，头一句「打不开 Miyu 的页面。」，下面是 `miyu` 标准错误的最后几行（照它的语言）或者超时、读不懂的一句，两个按钮「重试」「退出」。「退出」只退外壳，不叫核心停。
 4. **网页视图的数据**（`localStorage` 里的设备令牌、缓存）放在外壳自己的数据目录（Tauri 的 `data_directory`，在应用标识 `io.github.miyu-agent.desktop` 的目录下），不放进 Miyu 的数据根；卸载外壳不动数据根。
 5. **页面能碰到的外壳**：只有一条命令 `notify`（系统通知的替身用，第 8 条；项目主人 2026-10-31 定）。`capabilities/page-notify.json` 只给主窗口里 `http://127.0.0.1:*` 的页面、只在 Windows、macOS 上、只有 `allow-notify` 这一项，`tauri.conf.json` 只打开这一份能力；不开 `withGlobalTauri`，页面自己的代码里没有 `window.__TAURI__`。不装 opener 插件（它默认接管 `target=_blank` 的点击，DT-1 碰到过），开系统的浏览器直接用 `open` 这个 crate。页面要的别的东西都照浏览器的写法写，外壳在网页视图外面接住（下面 6 到 9）；要页面多给什么，找网页加在 `served.js` 里，不在外壳里开口子。往这个口子里加东西先改这一条、找项目主人；测试 `src/notify/tests.rs` 守着。
@@ -78,7 +78,8 @@
 | `tray.quit` | 退出 |
 | `error.no_program` | 找不到 Miyu 的主程序。重新装一次 Miyu 试试。 |
 | `error.open` | 打不开 Miyu 的页面。 |
-| `error.timeout` | 等了 30 秒，Miyu 还没起来。 |
+| `error.timeout` | 等了 60 秒，Miyu 还没起来。 |
+| `starting` | 正在启动 Miyu… |
 | `error.bad_reply` | Miyu 给的网址读不懂。 |
 | `menu.quit` | 退出 Miyu（macOS 的应用菜单） |
 | `menu.edit` | 编辑 |

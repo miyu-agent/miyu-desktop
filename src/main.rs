@@ -13,6 +13,7 @@ mod program;
 mod quit;
 mod text;
 mod tray;
+mod waiting;
 mod window;
 
 use std::path::PathBuf;
@@ -60,7 +61,7 @@ fn main() {
             ));
             #[cfg(target_os = "macos")]
             handle.set_menu(menu::create(handle, &text)?)?;
-            window::create(handle, &known, data)?;
+            window::create(handle, &known, data, &text)?;
             if let Err(error) = tray::create(handle, &text) {
                 log::line(&format!("no tray icon: {error}"));
             }

@@ -22,7 +22,7 @@ pub const LABEL: &str = "main";
 /// 网页软件的来源：要到网址以后才有。导航的判断读它。
 pub type Known = Arc<Mutex<Option<Origin>>>;
 
-/// 建窗口：标题 Miyu，第一次 1200×800（以后照窗口状态插件记的），网页视图先开 `about:blank`。
+/// 建窗口：标题 Miyu，大小照 [`first_size`]（以后照窗口状态插件记的），网页视图先开等待页（`waiting.rs`）。
 ///
 /// # Errors
 /// Tauri 建不出窗口。
@@ -30,9 +30,11 @@ pub fn create(
     app: &AppHandle,
     known: &Known,
     data: Option<PathBuf>,
+    text: &Text,
 ) -> tauri::Result<WebviewWindow> {
     let blank = WebviewUrl::External(
-        Url::parse("about:blank").map_err(|e| tauri::Error::Anyhow(e.into()))?,
+        Url::parse(&crate::waiting::page(text.get(key::STARTING)))
+            .map_err(|e| tauri::Error::Anyhow(e.into()))?,
     );
     let on_navigation = Arc::clone(known);
     let downloads = app.path().download_dir().ok();

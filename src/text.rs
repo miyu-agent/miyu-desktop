@@ -33,11 +33,12 @@ pub mod key {
     pub const BAD_REPLY: &str = "error.bad_reply";
     pub const RETRY: &str = "button.retry";
     pub const QUIT: &str = "button.quit";
+    pub const STARTING: &str = "starting";
 }
 
 /// 上面每一个键，测试查三份里都有。
 #[cfg(test)]
-const KEYS: [&str; 12] = [
+const KEYS: [&str; 13] = [
     key::TRAY_SHOW,
     key::TRAY_QUIT,
     key::MENU_QUIT,
@@ -50,6 +51,7 @@ const KEYS: [&str; 12] = [
     key::BAD_REPLY,
     key::RETRY,
     key::QUIT,
+    key::STARTING,
 ];
 
 /// 一种语言。
