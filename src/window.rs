@@ -22,7 +22,9 @@ pub const LABEL: &str = "main";
 /// 网页软件的来源：要到网址以后才有。导航的判断读它。
 pub type Known = Arc<Mutex<Option<Origin>>>;
 
-/// 建窗口：标题 Miyu，大小照 [`first_size`]（以后照窗口状态插件记的），网页视图先开等待页（`waiting.rs`）。
+/// 建窗口：标题 Miyu，大小照 [`first_size`]（以后照窗口状态插件记的），网页视图先开等待页（`waiting.rs`）。等待页是
+/// `data:` 网址，Tauri 不开 `webview-data-url` 功能不让拿它建窗口（那个功能要多带一套解析 HTML 的依赖），所以先开
+/// `about:blank`，建好了再导航过去；导航不查这一条。
 ///
 /// # Errors
 /// Tauri 建不出窗口。
@@ -33,9 +35,10 @@ pub fn create(
     text: &Text,
 ) -> tauri::Result<WebviewWindow> {
     let blank = WebviewUrl::External(
-        Url::parse(&crate::waiting::page(text.get(key::STARTING)))
-            .map_err(|e| tauri::Error::Anyhow(e.into()))?,
+        Url::parse("about:blank").map_err(|e| tauri::Error::Anyhow(e.into()))?,
     );
+    let waiting = Url::parse(&crate::waiting::page(text.get(key::STARTING)))
+        .map_err(|e| tauri::Error::Anyhow(e.into()))?;
     let on_navigation = Arc::clone(known);
     let downloads = app.path().download_dir().ok();
     let first = app
@@ -81,6 +84,9 @@ pub fn create(
         }
     });
     notify::allow(&window);
+    if let Err(error) = window.navigate(waiting) {
+        log::line(&format!("no waiting page: {error}"));
+    }
     Ok(window)
 }
 
