@@ -26,8 +26,13 @@ pub fn allow(window: &tauri::WebviewWindow) {
             true
         });
         view.connect_show_notification(move |_, notification| {
+            log::line(&format!("notification shown, id {}", notification.id()));
             let app = app.clone();
-            notification.connect_clicked(move |_| window::bring_back(&app));
+            notification.connect_clicked(move |_| {
+                log::line("notification clicked");
+                window::bring_back(&app);
+            });
+            notification.connect_closed(|_| log::line("notification closed"));
             false
         });
     });
