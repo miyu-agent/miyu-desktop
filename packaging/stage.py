@@ -6,7 +6,7 @@
 # 网页包的文件夹照网页仓库 tools/pack-web.py 装好的样子（网页的会话 2026-10-30 定）：清单补 version、不写 targets，
 # web.json、matugen/ 原样，pages/ 是 web-demo 里给浏览器的七样，程序放 bin/。
 #   python3 packaging/stage.py --core <核心检出> --web <网页检出> --triple <rustc 的 host> --out dist
-import argparse, pathlib, re, shutil, sys, tomllib
+import argparse, hashlib, io, pathlib, re, shutil, sys, tomllib, urllib.request, zipfile
 
 # 核心带的三个程序（核心的主会话 2026-10-30 定）：主程序、沙盒助手、抽字的小程序。
 CORE_PROGRAMS = ['miyu', 'miyu-sandbox', 'miyu-extract']
@@ -37,6 +37,23 @@ def copy_program(built, name, exe, dest):
         sys.exit(f'没编出来：{src}')
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dest)
+
+
+def stage_pwsh(pin, triple, dest):
+    """Windows：官方的 PowerShell zip 下载下来、核对校验值、解进资源目录的 pwsh/（施工 DT-9）。"""
+    arch = 'arm64' if triple.startswith('aarch64') else 'x64'
+    version, want = pin['version'], pin[f'win-{arch}']
+    url = f'https://github.com/PowerShell/PowerShell/releases/download/v{version}/PowerShell-{version}-win-{arch}.zip'
+    with urllib.request.urlopen(url, timeout=600) as response:
+        data = response.read()
+    got = hashlib.sha256(data).hexdigest()
+    if got != want:
+        sys.exit(f'PowerShell {version} win-{arch} 的校验值不对：{got}，pins.toml 里是 {want}')
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        archive.extractall(dest)
+    if not (dest / 'pwsh.exe').is_file():
+        sys.exit(f'{url} 解开以后没有 pwsh.exe')
+    print(f'PowerShell {version} win-{arch} -> {dest}')
 
 
 def main():
@@ -86,6 +103,8 @@ def main():
     copy_program(args.web_built or args.web / 'target' / 'release', 'miyu-web', exe, package / 'bin' / f'miyu-web{exe}')
 
     pins = tomllib.loads((pathlib.Path(__file__).resolve().parent.parent / 'pins.toml').read_text(encoding='utf-8'))
+    if 'windows' in args.triple:
+        stage_pwsh(pins['pwsh'], args.triple, resources / 'pwsh')
     (out / 'pins.txt').write_text(
         ''.join(f'{part}: {pins[part]["repo"]}@{pins[part]["rev"]}\n' for part in ('core', 'web')), encoding='utf-8')
     print(f'staged into {out}')
