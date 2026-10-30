@@ -43,8 +43,8 @@
 | 第一次开窗口拿不到网址 | 修了 | 弹「Miyu 给的网址读不懂」：`miyu web` 顺带拉起的核心、网页软件继承了外壳读输出的管道，外壳等读到头等不到。改成读到一块收一块（f45bf97），之后免密进到欢迎屏 |
 | 安装程序没有图标 | 修了 | 用的是 NSIS 默认的；`installerIcon` 换成 `icons/icon.ico` |
 | 覆盖安装写不进 `miyu-web.exe` | 修了 | 上一次的网页软件还在跑（它空闲 10 分钟才退，没有停的命令）。钩子装、卸之前照路径结束这个安装目录下还在跑的 `miyu-web`、`miyu`、`miyu-extract`、`miyu-sandbox`（核心先照 `miyu core stop` 停） |
-| 启动时黑窗口一闪 | 核心的事 | 进程追踪：核心（没有控制台）拉起 `miyu-sandbox.exe` 没带 `CREATE_NO_WINDOW`，Windows 11 新开控制台交给 Windows Terminal。外壳调 `miyu` 带了，不弹。已交核心的主会话 |
-| 黑屏、刚打开时卡 | 别家的程序 | WebView2 的主进程崩在 `RTSSHooks64.dll`（RivaTuner Statistics Server 的钩子，注入每个用显卡画的程序）；页面文件 276 个 0.8 秒送完，不是网页软件慢；GPU 是硬件渲染（NVIDIA）。项目主人关掉 RTSS 再测 |
+| 启动时黑窗口一闪 | 核心的事 | 进程追踪：核心（没有控制台）拉起 `miyu-sandbox.exe` 没带 `CREATE_NO_WINDOW`，Windows 11 新开控制台交给 Windows Terminal。外壳调 `miyu` 带了，不弹。核心修了（NW-1，f17fdbc5c），换钉以后项目主人复测不闪了 |
+| 黑屏、刚打开时卡 | 别家的程序 | WebView2 的主进程崩在 `RTSSHooks64.dll`（RivaTuner Statistics Server 的钩子，注入每个用显卡画的程序）；页面文件 276 个 0.8 秒送完，不是网页软件慢；GPU 是硬件渲染（NVIDIA）。项目主人关掉 RTSS 再测：不卡、不黑屏 |
 
 - 网页软件给页面文件只回 `Cache-Control: no-cache`、不带 ETag，每次开窗口整套重下：转给网页的会话看要不要加。
 - WebView2 的进程被别的程序弄崩时窗口只剩黑的、外壳不知道：Tauri 不给 WebView2 的 `ProcessFailed`，要接得写不安全的 COM 调用（仓库 `forbid(unsafe_code)`）。先记着；碰到的多了再找 Tauri 或者照 wry 的接口加。
