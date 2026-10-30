@@ -31,7 +31,7 @@
 | `src/text.rs`、`resources/text/{zh,en,ja}.toml` | 给人看的字 |
 | `icons/` | 应用图标、托盘图标；`icons/source/` 是原图 `logo.png`、两份矢量稿和出图的脚本 `build.sh`（施工 DT-5：换图重跑） |
 | `.github/workflows/ci.yml` | 三平台：格式、clippy、测试、行数、正式版的程序（试验用） |
-| `pins.toml`、`packaging/`、`.github/workflows/release.yml` | 打安装包：钉的核心和网页版本，搭内容的脚本，三个平台的打包配置，Windows 安装的钩子，AUR 的 PKGBUILD 模板（施工 DT-6，「装在哪」） |
+| `pins.toml`、`packaging/`、`.github/workflows/release.yml` | 打安装包：钉的核心和网页版本，搭内容的脚本，三个平台的打包配置，Windows 安装包的自定义步骤，AUR 的 PKGBUILD 模板（施工 DT-6，「装在哪」） |
 
 ### 怎么走
 
@@ -68,7 +68,7 @@
 
 - Linux 的包写依赖 WebKitGTK 4.1、ayatana 的托盘库、`bubblewrap`，不自带。AUR 的包 `miyu-desktop-bin` 拆发版里的 deb，带了核心，和单独装的 `miyu` 冲突。
 - macOS 的资源目录照 `bundle.macOS.files` 放进 `Contents/Resources/miyu/`（不能用 `resources`：编的时候它也拷进 `target/release/miyu/`，和外壳旁边的程序 `miyu` 撞名）。没签名，只做本机的临时签名（`signingIdentity` 是 `-`，Apple 芯片上不签就不让跑）；第一次打开照样要在「隐私与安全性」里放行。沙盒用系统的 Seatbelt，什么都不用装。
-- Windows 照 perMachine 装（提权）：装之前叫在跑的核心停，装完跑 `miyu sandbox setup` 建沙盒用户，卸之前叫核心停、跑 `miyu sandbox remove`；setup 失败不挡安装，原话留在安装日志里（`packaging/windows/hooks.nsh`；设计 11 A3）。
+- Windows 出 64 位的 MSI（WiX，x64；项目主人 2026-10-30 定安装程序也要 64 位，NSIS 只有 32 位），中、英、日各一个，照 perMachine 装进 `Program Files\Miyu\`，安装目录进 PATH。装、卸、修之前先 `miyu core stop`，再用 64 位的 PowerShell 照路径结束安装目录下还在跑的程序（`packaging/windows/miyu.wxs`）。沙盒不用配：MXC 跑命令不要沙盒用户、不要管理员（核心的主会话 2026-10-30）。`upgradeCode` 钉死在 `packaging/windows.json`，换了就升级不了。
 - 核心、网页软件用哪一版钉在 `pins.toml`（完整的提交号）；发版的流水线 `.github/workflows/release.yml` 照它编、`packaging/stage.py` 搭内容、Tauri 打包（`packaging/<平台>.json`），用包里的 `miyu --version` 试一下起得来，钉的提交号写进发版说明。
 
 ### 给人看的字

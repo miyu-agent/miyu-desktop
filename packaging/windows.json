@@ -2,7 +2,7 @@
   "bundle": {
     "active": true,
     "targets": [
-      "nsis"
+      "msi"
     ],
     "category": "Utility",
     "publisher": "miyu-agent",
@@ -17,16 +17,19 @@
       "dist/resources/": "resources/"
     },
     "windows": {
-      "nsis": {
-        "installMode": "perMachine",
-        "languages": [
-          "SimpChinese",
-          "English",
-          "Japanese"
+      "wix": {
+        "language": [
+          "zh-CN",
+          "en-US",
+          "ja-JP"
         ],
-        "displayLanguageSelector": false,
-        "installerHooks": "packaging/windows/hooks.nsh",
-        "installerIcon": "icons/icon.ico"
+        "upgradeCode": "afb45f40-4d79-48c9-8a54-be5290ce1b45",
+        "fragmentPaths": [
+          "packaging/windows/miyu.wxs"
+        ],
+        "componentGroupRefs": [
+          "MiyuStopRunning"
+        ]
       }
     }
   }

@@ -4,7 +4,7 @@
 
 ### 目的
 
-出三平台的安装包，装上就能用：Linux 的 deb、rpm、AUR，Windows 的 NSIS，macOS 的 dmg。包里带外壳、核心（三个程序加资源目录）和网页软件（项目主人 2026-10-29 定，`README.md` 第一节第 5、6 条）。核心没有出安装包的流水线，这里照钉的提交号自己编。
+出三平台的安装包，装上就能用：Linux 的 deb、rpm、AUR，Windows 的 MSI（64 位；原来是 NSIS，2026-10-30 项目主人要 64 位的安装程序，换了），macOS 的 dmg。包里带外壳、核心（三个程序加资源目录）和网页软件（项目主人 2026-10-29 定，`README.md` 第一节第 5、6 条）。核心没有出安装包的流水线，这里照钉的提交号自己编。
 
 ### 蓝图改哪几节
 
@@ -12,7 +12,8 @@
 
 ### 要拍板的
 
-- 带哪几个程序、资源目录、编法、沙盒：核心的主会话 2026-10-30 定（`miyu`、`miyu-sandbox`、`miyu-extract`，整份 `resources/`，Windows 装时跑 `miyu sandbox setup`、卸时 `remove`，失败不挡安装）。
+- 带哪几个程序、资源目录、编法、沙盒：核心的主会话 2026-10-30 定（`miyu`、`miyu-sandbox`、`miyu-extract`，整份 `resources/`）。原来定 Windows 装时跑 `miyu sandbox setup`、卸时 `remove`；同一天核心的主会话又说 MXC 跑命令不用沙盒用户，安装包里不跑（setup 会往跑它的人的数据根写东西，MSI 提权的步骤是 SYSTEM，写错地方）。
+- Windows 换 64 位的 MSI（项目主人 2026-10-30：「什么年代了，还在用32位」）：NSIS 只有 32 位，Tauri 里 64 位的安装包只有 WiX 出的 MSI。一个 MSI 只带一种界面语言，出中、英、日三个。
 - 网页包在出厂层的样子：网页的会话 2026-10-30 定（照 `tools/pack-web.py`，清单补 version、不写 targets，程序放 `bin/`）；网页照它的 main 钉，不照核心 `heads.toml` 里改名前的那一版。
 - macOS 做本机的临时签名：不签 Apple 芯片上跑不起来；这不是项目主人说的「签名」（开发者证书、公证），第一次打开照样要放行。
 - AUR：出填好的 PKGBUILD 传进发版，推到 AUR 要项目主人的账号，由项目主人做。
@@ -45,6 +46,7 @@
 | 覆盖安装写不进 `miyu-web.exe` | 修了 | 上一次的网页软件还在跑（它空闲 10 分钟才退，没有停的命令）。钩子装、卸之前照路径结束这个安装目录下还在跑的 `miyu-web`、`miyu`、`miyu-extract`、`miyu-sandbox`（核心先照 `miyu core stop` 停） |
 | 启动时黑窗口一闪 | 核心的事 | 进程追踪：核心（没有控制台）拉起 `miyu-sandbox.exe` 没带 `CREATE_NO_WINDOW`，Windows 11 新开控制台交给 Windows Terminal。外壳调 `miyu` 带了，不弹。核心修了（NW-1，f17fdbc5c），换钉以后项目主人复测不闪了 |
 | 黑屏、刚打开时卡 | 别家的程序 | WebView2 的主进程崩在 `RTSSHooks64.dll`（RivaTuner Statistics Server 的钩子，注入每个用显卡画的程序）；页面文件 276 个 0.8 秒送完，不是网页软件慢；GPU 是硬件渲染（NVIDIA）。项目主人关掉 RTSS 再测：不卡、不黑屏 |
+| 安装程序是 32 位 | 换了 | NSIS 只有 32 位（它拉起的 PowerShell 也是 32 位，读不到 64 位进程的路径，第一版停进程的钩子因此什么都没停掉）。换成 WiX 出的 64 位 MSI，停进程用 `System64Folder` 下的 PowerShell |
 
-- 网页软件给页面文件只回 `Cache-Control: no-cache`、不带 ETag，每次开窗口整套重下：转给网页的会话看要不要加。
+- 网页软件给页面文件只回 `Cache-Control: no-cache`、不带 ETag，每次开窗口整套重下：网页的会话加了 ETag、304（W-1006，网页 0e210c97 起）。
 - WebView2 的进程被别的程序弄崩时窗口只剩黑的、外壳不知道：Tauri 不给 WebView2 的 `ProcessFailed`，要接得写不安全的 COM 调用（仓库 `forbid(unsafe_code)`）。先记着；碰到的多了再找 Tauri 或者照 wry 的接口加。
