@@ -1,0 +1,56 @@
+# 三平台 CI（照网页仓库的那一份）：格式、clippy、测试、行数。Linux 先装 Tauri 要的系统库（WebKitGTK、托盘）。
+name: CI
+
+on:
+  push:
+    branches: [main, "step/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: 装 Tauri 要的系统库
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev
+      - name: 装上 rust-toolchain.toml 钉住的工具链
+        run: rustup toolchain install
+      - name: 取编译缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+          add-rust-environment-hash-key: false
+      - name: 格式
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: 测试
+        run: cargo test --locked --no-fail-fast
+      - name: 行数（每个 .rs 不超过 500 行，测试也算）
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          over=$(find src -name '*.rs' -print0 | xargs -0 wc -l | awk '$2 != "total" && $1 > 500 {print}')
+          if [ -n "$over" ]; then echo "超过 500 行：" && echo "$over" && exit 1; fi
+      - name: 正式版（试验用，收下程序手测）
+        run: cargo build --release --locked
+      - uses: actions/upload-artifact@v4
+        with:
+          name: miyu-desktop-${{ runner.os }}
+          path: |
+            target/release/miyu-desktop
+            target/release/miyu-desktop.exe
+          if-no-files-found: error
+          retention-days: 14

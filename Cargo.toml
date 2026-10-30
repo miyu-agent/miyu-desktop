@@ -1,0 +1,46 @@
+[package]
+name = "miyu-desktop"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+license = "AGPL-3.0-or-later"
+description = "Miyu 的桌面端：Tauri 窗口开网页软件给的本机页面，外加托盘"
+publish = false
+
+# Tauri 和插件钉死版本：网页视图、托盘的行为跟着它们变，升级单独做一步、三个平台再手测一遍。
+[build-dependencies]
+tauri-build = { version = "=2.7.4", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.5", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = "=2.5.5"
+tauri-plugin-window-state = "=2.5.0"
+tauri-plugin-dialog = "=2.8.4"
+open = "5.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sys-locale = "0.3"
+toml = "0.8"
+url = "2"
+
+# Linux 的网页视图（WebKitGTK）：放行通知的权限、接住点通知（蓝图「怎么走」第 8 条）。和 Tauri 用的同一版。
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
+glib = "0.18"
+
+[lints.rust]
+unsafe_code = "forbid"
+# 不吞错误：必须处理的返回值不许不理。
+unused_must_use = "deny"
+
+[lints.clippy]
+# 不吞错误：不许用 `let _ =` 或 `.ok()` 把错误悄悄扔掉。真要扔，写 #[expect(..., reason = "...")]。
+let_underscore_must_use = "deny"
+unused_result_ok = "deny"
+# 读到坏数据要报错，不能直接崩。测试里允许，见 clippy.toml。
+unwrap_used = "deny"
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true

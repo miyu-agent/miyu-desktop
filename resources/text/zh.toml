@@ -1,0 +1,13 @@
+# 外壳自己给人看的字，中文是正本（蓝图「给人看的字」）。键改了三份一起改，测试会查。
+"tray.show" = "显示 Miyu"
+"tray.quit" = "退出"
+"menu.quit" = "退出 Miyu"
+"menu.edit" = "编辑"
+"menu.window" = "窗口"
+"menu.close" = "关闭窗口"
+"error.no_program" = "找不到 Miyu 的主程序。重新装一次 Miyu 试试。"
+"error.open" = "打不开 Miyu 的页面。"
+"error.timeout" = "等了 30 秒，Miyu 还没起来。"
+"error.bad_reply" = "Miyu 给的网址读不懂。"
+"button.retry" = "重试"
+"button.quit" = "退出"

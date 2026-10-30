@@ -1,0 +1,143 @@
+use super::*;
+
+fn exe(name: &str) -> String {
+    format!("{name}{}", std::env::consts::EXE_SUFFIX)
+}
+
+fn ran(code: i32, stdout: &str, stderr: &str) -> Ran {
+    Ran {
+        code: Some(code),
+        stdout: stdout.into(),
+        stderr: stderr.into(),
+    }
+}
+
+#[test]
+fn the_environment_variable_wins() {
+    let got = locate(
+        Some("/dev/miyu".into()),
+        Some(Path::new("/opt/m")),
+        None,
+        |_| true,
+    );
+    assert_eq!(got, Some(PathBuf::from("/dev/miyu")));
+}
+
+#[test]
+fn an_empty_environment_variable_is_not_set() {
+    let got = locate(Some("".into()), Some(Path::new("/opt/m")), None, |_| true);
+    assert_eq!(got, Some(Path::new("/opt/m").join(exe("miyu"))));
+}
+
+#[test]
+fn beside_the_shell_comes_before_the_path() {
+    let path = std::env::join_paths(["/usr/bin"]).unwrap();
+    let got = locate(None, Some(Path::new("/opt/m")), Some(path), |_| true);
+    assert_eq!(got, Some(Path::new("/opt/m").join(exe("miyu"))));
+}
+
+#[test]
+fn the_path_is_searched_in_order() {
+    let path = std::env::join_paths(["/a", "/b", "/c"]).unwrap();
+    let wanted = Path::new("/b").join(exe("miyu"));
+    let got = locate(None, Some(Path::new("/opt/m")), Some(path), |p| p == wanted);
+    assert_eq!(got, Some(wanted));
+}
+
+#[test]
+fn nowhere_is_none() {
+    let path = std::env::join_paths(["/a"]).unwrap();
+    assert_eq!(
+        locate(None, Some(Path::new("/opt/m")), Some(path), |_| false),
+        None
+    );
+    assert_eq!(locate(None, None, None, |_| true), None);
+}
+
+#[test]
+fn a_good_reply_gives_the_address_and_its_origin() {
+    let line = r#"{"url":"http://127.0.0.1:8300/#ticket=abc","first":true}"#;
+    let (url, origin) = read_open(&ran(0, &format!("{line}\n"), "")).unwrap();
+    assert_eq!(url.as_str(), "http://127.0.0.1:8300/#ticket=abc");
+    assert!(origin.holds(&"http://127.0.0.1:8300/x".parse().unwrap()));
+}
+
+#[test]
+fn more_fields_are_fine() {
+    let line = r#"{"url":"http://127.0.0.1:8300/","first":false,"later":1}"#;
+    assert!(read_open(&ran(0, line, "")).is_ok());
+}
+
+#[test]
+fn a_reply_without_a_loopback_address_is_bad() {
+    for line in [
+        r#"{"first":true}"#,
+        r#"{"url":"https://example.com/#ticket=abc"}"#,
+        r#"{"url":"http://127.0.0.1/"}"#,
+        r#"{"url":"not a url"}"#,
+        "http://127.0.0.1:8300/",
+        "",
+    ] {
+        assert_eq!(
+            read_open(&ran(0, line, "")),
+            Err(OpenError::BadReply),
+            "{line}"
+        );
+    }
+}
+
+#[test]
+fn a_failure_brings_back_the_last_lines_of_stderr() {
+    let stderr = "a\n\nb\nc\nd\ne\nf\ng\n";
+    assert_eq!(
+        read_open(&ran(1, "", stderr)),
+        Err(OpenError::Failed("b\nc\nd\ne\nf\ng".into()))
+    );
+}
+
+#[test]
+fn killed_by_a_signal_is_a_failure() {
+    let killed = Ran {
+        code: None,
+        stdout: br#"{"url":"http://127.0.0.1:8300/"}"#.to_vec(),
+        stderr: Vec::new(),
+    };
+    assert_eq!(read_open(&killed), Err(OpenError::Failed(String::new())));
+}
+
+#[cfg(unix)]
+#[test]
+fn run_collects_output_and_the_exit_code() {
+    let got = run(
+        Path::new("/bin/sh"),
+        &["-c", "echo out; echo err >&2; exit 3"],
+        Duration::from_secs(10),
+    )
+    .unwrap();
+    assert_eq!(got.code, Some(3));
+    assert_eq!(got.stdout, b"out\n");
+    assert_eq!(got.stderr, b"err\n");
+}
+
+#[cfg(unix)]
+#[test]
+fn run_kills_what_runs_too_long() {
+    let started = Instant::now();
+    let got = run(
+        Path::new("/bin/sh"),
+        &["-c", "sleep 30"],
+        Duration::from_millis(200),
+    );
+    assert!(matches!(got, Err(RunError::Timeout)));
+    assert!(started.elapsed() < Duration::from_secs(10));
+}
+
+#[test]
+fn run_says_when_it_cannot_start() {
+    let got = run(
+        Path::new("/nowhere/miyu-not-here"),
+        &[],
+        Duration::from_secs(1),
+    );
+    assert!(matches!(got, Err(RunError::Spawn(_))));
+}
