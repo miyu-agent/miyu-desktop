@@ -1,6 +1,6 @@
 ## DT-6：打包和发版
 
-状态：在做（2026-10-30）。
+状态：已完成（2026-10-31）。三台的「打包」流水线出得了 deb、rpm、PKGBUILD、dmg、64 位 MSI；Linux（Arch 虚拟机装 pacman 包）、Windows（Win11 虚拟机装 MSI）项目主人手测过。macOS 只出包、拆开看过，没在 Mac 上手测；Windows 上剩下的几件是核心、网页的事（见「Windows 手测」末尾），跟着它们换钉。
 
 ### 目的
 
@@ -56,3 +56,21 @@
 
 - 网页软件给页面文件只回 `Cache-Control: no-cache`、不带 ETag，每次开窗口整套重下：网页的会话加了 ETag、304（W-1006，网页 0e210c97 起）。
 - WebView2 的进程被别的程序弄崩时窗口只剩黑的、外壳不知道：Tauri 不给 WebView2 的 `ProcessFailed`，要接得写不安全的 COM 调用（仓库 `forbid(unsafe_code)`）。先记着；碰到的多了再找 Tauri 或者照 wry 的接口加。
+
+### Arch 手测（项目主人的 Arch 虚拟机，niri，WebKitGTK 2.54.2，2026-10-30、31）
+
+| 项 | 结论 | 依据 |
+|---|---|---|
+| 装 | 行 | 流水线出的 PKGBUILD 在本机 makepkg 成 `miyu-desktop-bin`（拆 deb），`pacman -U` 装上：依赖 webkit2gtk-4.1、gtk3、libayatana-appindicator、bubblewrap，provides、conflicts `miyu`，四个程序、`/usr/share/miyu` 1186 个文件、桌面文件都在 |
+| 拿网址、页面 | 行 | 装好的 `miyu web` 19 毫秒；网页软件从 `/usr/share/miyu/packages/miyu-webui/bin/` 起；主人在 niri 里开窗口、托盘、退出都过了 |
+| 外链、软件后台的 ↗ 打不开 | 这台机器的设置 | 默认浏览器是 `dms-open.desktop`（`dms open`，要 DankMaterialShell 在跑，这个会话里没起），`xdg-open` 落空；项目主人让改成 Firefox（`xdg-settings set default-web-browser firefox.desktop`）以后好了 |
+| 输入框下沿一条细线 | 网页修了 | WebKitGTK 画的横向滚动条；网页 W-1022（1b918348）加 `overflow-x: hidden`、`appearance: none`，复测没了 |
+
+- 这台虚拟机上原来就装着一份 `~/.local` 下的 Miyu（核心开着、带 IM 桥）。测的时候我跑 `miyu core stop` 停了它约 25 秒，照它自己的程序拉回来了；以后在共用的机器上先看清是谁的核心再动。
+- 交给系统浏览器成没成，外壳现在不知道（`open::that_detached` 只管拉起）。要不要等 `xdg-open` 跑完、失败了记一行，留给以后。
+
+### 留给后面的
+
+- macOS 上手测：窗口、托盘（模板图）、通知、`⌘Q`、dmg 装、第一次打开放行。
+- Windows：沙盒里失败时还是 CLIXML、CIM 失败没接上「沙盒挡着 WMI」那句、受保护路径列表混着 Linux 的出厂项（核心）；路径照 Windows 的写法显示、添加框的例子（网页）。修了换钉。
+- 发版：打 v 开头的 tag 出预发布、AUR 由项目主人推。

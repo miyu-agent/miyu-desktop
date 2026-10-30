@@ -22,9 +22,9 @@
 | DT-4 上 | 核心：`.app` 里也找得到资源目录（上一级下的 `Resources/miyu/`，照能力找，不判 macOS）。施工单 `DT-4上-app资源目录.md` | 核心 | 已完成 |
 | DT-4 下 | 核心：方法 `core.stop`，只给本机令牌连上的，回应以后照「收到停的信号」收尾（`stopped reason=request`）；命令行入口 `miyu core stop` 由核心的 CL 线加，外壳调它。浏览器标签页还开着的会重连、把核心再拉起来，当成可以接受。施工单 `DT-4下-叫核心停下.md` | 核心 | 已完成 |
 | DT-5 | 图标：应用图标、小图标、托盘图标三套，从一份矢量稿出。施工单 `DT-5-图标.md` | 这里 | 已完成 |
-| DT-6 | 打包和发版：Linux 的 deb、rpm、AUR，Windows 的 NSIS，macOS 的 dmg；钉核心、网页软件的版本。施工单 `DT-6-打包.md` | 这里 | 在做 |
+| DT-6 | 打包和发版：Linux 的 deb、rpm、AUR，Windows 的 NSIS，macOS 的 dmg；钉核心、网页软件的版本。施工单 `DT-6-打包.md` | 这里 | 已完成（Linux、Windows 手测；macOS 等 Mac） |
 | DT-7 | 许可证：照 miyu-im 的 `xtask/src/licenses.rs` 搬一份许可证门禁进 CI（依赖的许可证照名单查，git 钉住的核心、网页 crate 放行 AGPL）；照核心那边 cargo-about 的做法出第三方许可证清单，随安装包发（外壳、核心、网页三份），MPL-2.0 的 `option-ext` 写明 crates.io 的源码地址（发布前审查 2026-10-30 第 9、17 条）；Tauri 带进来的几个不再维护、unsound 的提醒（proc-macro-error、zbus_names、zvariant、zvariant_derive、glib 0.18）记在施工单里，跟着 Tauri 升级 | 这里 | 待做，等核心的 cargo-about 做法定了 |
 
 ### 三、下一张
 
-DT-6 打包和发版：Linux 的 deb、rpm、AUR（依赖 webkit2gtk-4.1、libayatana-appindicator、bubblewrap），Windows 的 NSIS，macOS 的 dmg；钉核心、网页软件的版本；三平台出包以后手测窗口、托盘、通知、菜单。
+DT-7 许可证：照 miyu-im 搬许可证门禁、照核心 AU-2 出第三方许可证清单随包发。
