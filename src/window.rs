@@ -36,9 +36,15 @@ pub fn create(
     );
     let on_navigation = Arc::clone(known);
     let downloads = app.path().download_dir().ok();
+    let first = app
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .map(|m| m.size().to_logical::<f64>(m.scale_factor()))
+        .map_or(FALLBACK, |screen| first_size(screen.width, screen.height));
     let mut builder = WebviewWindowBuilder::new(app, LABEL, blank)
         .title("Miyu")
-        .inner_size(1200.0, 800.0)
+        .inner_size(first.0, first.1)
         .min_inner_size(400.0, 300.0)
         .center()
         .on_navigation(move |url| {
@@ -71,6 +77,19 @@ pub fn create(
     });
     notify::allow(&window);
     Ok(window)
+}
+
+/// 主屏量不出来时第一次开窗口的大小（逻辑像素）。
+const FALLBACK: (f64, f64) = (1200.0, 800.0);
+
+/// 第一次开窗口的大小（逻辑像素，以后照窗口状态插件记的）：屏幕的七成五，不小于 1100×760（左栏 252 宽，再窄对话区挤），
+/// 也不超过屏幕的九成（小屏幕上照屏幕来）。项目主人 2026-10-30：1200×800 在 2560 宽的屏幕上显得左栏太宽。
+pub fn first_size(screen_width: f64, screen_height: f64) -> (f64, f64) {
+    let fit = |share: f64, least: f64, screen: f64| (screen * share).max(least).min(screen * 0.9);
+    (
+        fit(0.75, 1100.0, screen_width).round(),
+        fit(0.75, 760.0, screen_height).round(),
+    )
 }
 
 /// 排查用（施工 DT-6，Windows 上查动画）：环境变量 `MIYU_DESKTOP_DEBUG_PORT` 写了 1024 以上的口子，WebView2 开只听本机的
