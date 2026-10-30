@@ -30,3 +30,20 @@ Windows 上模型照 bash、PowerShell 7 的习惯写 `cmd1 && cmd2`，系统自
 ### 风险
 
 - 每次打 Windows 包都从 GitHub 下 110 MB：GitHub 抽风时打包失败，重跑就行。
+
+### 手测（2026-10-31，Windows 11 虚拟机）
+
+安装包：桌面 12e5570（核心 62f2e91c2，含核心 SW-4、SW-5、SW-6；网页 2029cf37）。`msiexec /qn` 覆盖安装，在交互会话里跑
+`miyu ask --format jsonl --permission workspace`，让模型逐条原样跑命令；默认工作区的两条用 `-C` 指到一个会话的
+`~\.miyu\workspace\<编号>`（网页、桌面开的会话用的就是这种目录）。
+
+| 查什么 | 结果 |
+|---|---|
+| 验收 2：装好的 `resources\pwsh\pwsh.exe` 的版本 | 7.6.9 |
+| 验收 3：沙盒里的 shell 用哪个 pwsh、`&&` | `C:\Program Files\Miyu\resources\pwsh\pwsh.exe`，7.6.9；`echo first && echo second` 两行 |
+| 失败的命令（核心 SW-4） | 纯文本 `Get-Item: Cannot find path …`，没有 CLIXML |
+| 默认工作区写、读、删（核心 SW-6） | PowerShell、包里的 Node（v22.23.3）都成；Node 的 `realpathSync` 不再 EPERM |
+| 沙盒里读 `.miyu\run\token` | 读不到 |
+| 沙盒里列 `.miyu` | 看得到名字（SW-6 的代价，核心定的） |
+
+虚拟机上没有 Python，「Python 存文件」这一条用 PowerShell、Node 代替。从家目录起 `miyu ask`（不带 `-C`）时会话就在家目录、写被拒，已转给核心看是不是预期。
