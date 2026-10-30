@@ -77,7 +77,8 @@ jobs:
         run: cargo build --release --locked -p miyu-web
       - name: 搭安装包的内容
         shell: bash
-        run: python3 packaging/stage.py --core _core --web _web --triple "$(rustc -vV | sed -n 's/^host: //p')" --out dist
+        run: |
+          python3 packaging/stage.py --core _core --web _web --triple "$(rustc -vV | sed -n 's/^host: //p')" --out dist
       - name: 包里的核心照常起得来
         shell: bash
         run: |
