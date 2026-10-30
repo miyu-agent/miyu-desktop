@@ -53,6 +53,12 @@ pub fn create(
     if let Some(data) = data {
         builder = builder.data_directory(data);
     }
+    if let Some(args) = browser_args(std::env::var("MIYU_DESKTOP_DEBUG_PORT").ok().as_deref()) {
+        log::line(&format!(
+            "webview debugging port open for diagnostics: {args}"
+        ));
+        builder = builder.additional_browser_args(&args);
+    }
     let window = builder.build()?;
     let hide = window.clone();
     window.on_window_event(move |event| {
@@ -65,6 +71,16 @@ pub fn create(
     });
     notify::allow(&window);
     Ok(window)
+}
+
+/// 排查用（施工 DT-6，Windows 上查动画）：环境变量 `MIYU_DESKTOP_DEBUG_PORT` 写了 1024 以上的口子，WebView2 开只听本机的
+/// 调试口子（`--remote-debugging-port`）。只有 WebView2 认这个参数，别的网页视图不理。没写、写错的交 `None`，照常不开。
+/// wry 默认的那一句要一起写上：一给参数就整个换掉。
+pub fn browser_args(port: Option<&str>) -> Option<String> {
+    let port: u16 = port?.trim().parse().ok().filter(|p| *p >= 1024)?;
+    Some(format!(
+        "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port={port}"
+    ))
 }
 
 /// 照 `navigate` 的判断：留下的放行，交出去的给系统的浏览器。交回放不放行。
@@ -203,3 +219,6 @@ pub fn bring_back(app: &AppHandle) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;
