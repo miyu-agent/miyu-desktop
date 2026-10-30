@@ -66,7 +66,7 @@
 | Windows（NSIS） | 安装目录下四个 `.exe` | 安装目录下的 `resources\` |
 
 - Linux 的包写依赖 WebKitGTK 4.1、ayatana 的托盘库、`bubblewrap`，不自带。AUR 的包 `miyu-desktop-bin` 拆发版里的 deb，带了核心，和单独装的 `miyu` 冲突。
-- macOS 没签名，只做本机的临时签名（`signingIdentity` 是 `-`，Apple 芯片上不签就不让跑）；第一次打开照样要在「隐私与安全性」里放行。沙盒用系统的 Seatbelt，什么都不用装。
+- macOS 的资源目录照 `bundle.macOS.files` 放进 `Contents/Resources/miyu/`（不能用 `resources`：编的时候它也拷进 `target/release/miyu/`，和外壳旁边的程序 `miyu` 撞名）。没签名，只做本机的临时签名（`signingIdentity` 是 `-`，Apple 芯片上不签就不让跑）；第一次打开照样要在「隐私与安全性」里放行。沙盒用系统的 Seatbelt，什么都不用装。
 - Windows 照 perMachine 装（提权）：装之前叫在跑的核心停，装完跑 `miyu sandbox setup` 建沙盒用户，卸之前叫核心停、跑 `miyu sandbox remove`；setup 失败不挡安装，原话留在安装日志里（`packaging/windows/hooks.nsh`；设计 11 A3）。
 - 核心、网页软件用哪一版钉在 `pins.toml`（完整的提交号）；发版的流水线 `.github/workflows/release.yml` 照它编、`packaging/stage.py` 搭内容、Tauri 打包（`packaging/<平台>.json`），用包里的 `miyu --version` 试一下起得来，钉的提交号写进发版说明。
 
