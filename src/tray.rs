@@ -8,6 +8,13 @@ use tauri::{AppHandle, image::Image};
 use crate::text::{Text, key};
 use crate::window;
 
+/// 托盘图标（施工 DT-5，`icons/source/build.sh` 出的）：macOS 是模板图，系统照菜单栏着色；别的带浅色底板，深色、浅色的任务栏上
+/// 都看得见。
+#[cfg(target_os = "macos")]
+const TRAY_ICON: &[u8] = include_bytes!("../icons/tray-template.png");
+#[cfg(not(target_os = "macos"))]
+const TRAY_ICON: &[u8] = include_bytes!("../icons/tray.png");
+
 /// 托盘图标的编号。
 pub const ID: &str = "main";
 /// 菜单项「显示 Miyu」。
@@ -23,7 +30,7 @@ pub fn create(app: &AppHandle, text: &Text) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, SHOW, text.get(key::TRAY_SHOW), true, None::<&str>)?;
     let quit = MenuItem::with_id(app, QUIT, text.get(key::TRAY_QUIT), true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
-    let icon = Image::from_bytes(include_bytes!("../icons/tray.png"))?;
+    let icon = Image::from_bytes(TRAY_ICON)?;
     TrayIconBuilder::with_id(ID)
         .icon(icon)
         .icon_as_template(true)
