@@ -6,6 +6,8 @@ on:
   push:
     branches: ["step/**"]
     tags: ["v*"]
+    # 只改文档的不重新打包（tag 照打）。
+    paths-ignore: ["docs/**", "**/*.md"]
   workflow_dispatch:
 
 permissions:

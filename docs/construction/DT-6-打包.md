@@ -47,6 +47,12 @@
 | 启动时黑窗口一闪 | 核心的事 | 进程追踪：核心（没有控制台）拉起 `miyu-sandbox.exe` 没带 `CREATE_NO_WINDOW`，Windows 11 新开控制台交给 Windows Terminal。外壳调 `miyu` 带了，不弹。核心修了（NW-1，f17fdbc5c），换钉以后项目主人复测不闪了 |
 | 黑屏、刚打开时卡 | 别家的程序 | WebView2 的主进程崩在 `RTSSHooks64.dll`（RivaTuner Statistics Server 的钩子，注入每个用显卡画的程序）；页面文件 276 个 0.8 秒送完，不是网页软件慢；GPU 是硬件渲染（NVIDIA）。项目主人关掉 RTSS 再测：不卡、不黑屏 |
 | 安装程序是 32 位 | 换了 | NSIS 只有 32 位（它拉起的 PowerShell 也是 32 位，读不到 64 位进程的路径，第一版停进程的钩子因此什么都没停掉）。换成 WiX 出的 64 位 MSI，停进程用 `System64Folder` 下的 PowerShell |
+| 聚焦窗口就连闪黑框 | 网页修了 | 进程追踪：页面每次拿回焦点问壁纸，网页软件拉 `reg.exe` 没带 `CREATE_NO_WINDOW`，30 秒 12 次。网页 W-1016（dabb37c4）：带上标志、记着壁纸的回答、一秒内只问一次 |
+| 「设置工作区」说找不到目录 | 核心、网页修了 | 握手的 `host.workspace` 带 `\\?\` 前缀（核心 WP-1，eb55db742 去掉）；网页兜一层（W-1011）。调试口子里调 `/pick-dir` 回 200、原生的选目录对话框弹得出来 |
+| 沙盒里的命令 125 | 核心修了 | 禁止路径里有 `NTUSER.DAT`、`UsrClass.dat`，登录着时系统独占，`CreateProcessSecurityEnvironment` 报 0x80070020；核心 SW-1（eb55db742）跳过被独占的文件 |
+| 沙盒里 PowerShell 进受限语言模式 | 核心的事，在修 | 出厂私密清单整个禁了 `AppData\Local\Packages`，容器自己的 TEMP 在它下面；PowerShell 写不了测试脚本就进 ConstrainedLanguage，核心开头那句 `[Console]::OutputEncoding = …` 跟着失败。外面设的 TEMP 被 MXC 改回容器自己的。另外 WMI（`Get-CimInstance`）在容器里本来就被挡，放不放核心问项目主人 |
+| 很多动画不动 | 这台机器的设置 | 交互会话里「动画效果」是关的（`SPI_GETCLIENTAREAANIMATION=False`），WebView2 报 `prefers-reduced-motion: reduce`，页面照规矩停了动画；调试口子里核实 |
+| 安装程序打不开 | 窗口被压在后面 | 三次双击起了三个 `msiexec /i`、都没露面；结束掉以后从交互会话重开，1 秒到欢迎页 |
 
 - 网页软件给页面文件只回 `Cache-Control: no-cache`、不带 ETag，每次开窗口整套重下：网页的会话加了 ETag、304（W-1006，网页 0e210c97 起）。
 - WebView2 的进程被别的程序弄崩时窗口只剩黑的、外壳不知道：Tauri 不给 WebView2 的 `ProcessFailed`，要接得写不安全的 COM 调用（仓库 `forbid(unsafe_code)`）。先记着；碰到的多了再找 Tauri 或者照 wry 的接口加。
