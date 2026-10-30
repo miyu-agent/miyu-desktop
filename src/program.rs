@@ -113,28 +113,43 @@ pub fn run(program: &Path, args: &[&str], limit: Duration) -> Result<Ran, RunErr
     })
 }
 
-/// 在另一个线程里读完一个管道。它拉起的程序要是接着拿着管道，读不完也不等：最多再等 2 秒（`gather`）。
+/// 在另一个线程里读一个管道，读到一块交一块。不等读到头：Windows 上它拉起的程序（核心、网页软件）会继承这条管道一直拿着，
+/// 读到头要等它们退出（施工 DT-6 在 Windows 上碰到：第一次开窗口时拿不到网址）。
 fn collect(pipe: Option<impl Read + Send + 'static>) -> mpsc::Receiver<Vec<u8>> {
     let (send, receive) = mpsc::channel();
     if let Some(mut pipe) = pipe {
         thread::spawn(move || {
-            let mut bytes = Vec::new();
-            if let Err(error) = pipe.read_to_end(&mut bytes) {
-                crate::log::line(&format!("reading a pipe: {error}"));
-            }
-            if send.send(bytes).is_err() {
-                crate::log::line("a pipe was read after nobody waited");
+            let mut chunk = [0u8; 8192];
+            loop {
+                match pipe.read(&mut chunk) {
+                    Ok(0) => return,
+                    Ok(n) => {
+                        if send.send(chunk[..n].to_vec()).is_err() {
+                            return;
+                        }
+                    }
+                    Err(error) => {
+                        crate::log::line(&format!("reading a pipe: {error}"));
+                        return;
+                    }
+                }
             }
         });
     }
     receive
 }
 
+/// 程序退出以后收下已经读到的：管道读到头了的立刻交，没到头的（还有别的程序拿着）再有 200 毫秒没新东西就交。
 fn gather(receive: mpsc::Receiver<Vec<u8>>) -> Vec<u8> {
-    receive
-        .recv_timeout(Duration::from_secs(2))
-        .unwrap_or_default()
+    let mut bytes = Vec::new();
+    while let Ok(chunk) = receive.recv_timeout(QUIET) {
+        bytes.extend_from_slice(&chunk);
+    }
+    bytes
 }
+
+/// 程序退出以后，管道多久没新东西就当读完了。
+const QUIET: Duration = Duration::from_millis(200);
 
 #[cfg(windows)]
 fn no_console(command: &mut Command) {

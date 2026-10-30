@@ -141,3 +141,25 @@ fn run_says_when_it_cannot_start() {
     );
     assert!(matches!(got, Err(RunError::Spawn(_))));
 }
+
+#[cfg(unix)]
+#[test]
+fn run_does_not_wait_for_a_child_that_keeps_the_pipe() {
+    let started = Instant::now();
+    let got = run(
+        Path::new("/bin/sh"),
+        &[
+            "-c",
+            "echo '{\"url\":\"http://127.0.0.1:8300/\"}'; sleep 30 & exit 0",
+        ],
+        Duration::from_secs(10),
+    )
+    .unwrap();
+    assert_eq!(got.code, Some(0));
+    assert!(
+        read_open(&got).is_ok(),
+        "{:?}",
+        String::from_utf8_lossy(&got.stdout)
+    );
+    assert!(started.elapsed() < Duration::from_secs(5));
+}
