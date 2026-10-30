@@ -22,7 +22,7 @@ DT-3 用原图直接缩的占位图标：原图是不透明的位图，托盘里
 
 ### 验收
 
-1. `icons/source/build.sh` 从 `logo.png` 出全部图标：`miyu.svg`、`miyu-simple.svg` 两份矢量稿，`icon.png`（512）、`32x32.png`、`128x128.png`、`128x128@2x.png`、`icon.ico`（16、24、32、48、64、256）、`tray.png`、`tray-template.png`，都是 RGBA（Tauri 只认这个）。
+1. `icons/source/build.sh` 从 `logo.png` 出全部图标：`miyu.svg`、`miyu-simple.svg` 两份矢量稿，`icon.png`（512）、`32x32.png`、`128x128.png`、`256x256.png`、`icon.ico`（16、24、32、48、64、256）、`tray.png`、`tray-template.png`，都是 RGBA（Tauri 只认这个）。
 2. 一张对照图看过每个尺寸，深、浅任务栏上的托盘图标都看得见。
 3. 本机 Linux 托盘上看到新图标；三平台 CI 编译过（Windows 把 `icon.ico` 编进程序）。
 

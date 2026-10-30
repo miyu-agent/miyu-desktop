@@ -53,7 +53,7 @@ for s in 48 64 128 256 512; do png "$tmp/app.svg" $s "$tmp/$s.png"; done
 cp "$tmp/512.png" $out/icon.png
 cp "$tmp/32.png" $out/32x32.png
 cp "$tmp/128.png" $out/128x128.png
-cp "$tmp/256.png" $out/128x128@2x.png
+cp "$tmp/256.png" $out/256x256.png
 magick "$tmp/16.png" "$tmp/24.png" "$tmp/32.png" "$tmp/48.png" "$tmp/64.png" "$tmp/256.png" $out/icon.ico
 
 # 托盘：Linux、Windows 带底板的 32px（高分屏缩着用 64px 的），macOS 模板图 44px（22pt 的两倍）。

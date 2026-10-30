@@ -1,0 +1,11 @@
+[Desktop Entry]
+Categories={{categories}}
+Comment=Miyu, an AI companion that works on your computer
+Comment[zh_CN]=Miyu，在你的电脑上干活的 AI 伙伴
+Comment[ja]=Miyu、あなたのコンピューターで働く AI の相棒
+Exec={{exec}}
+StartupWMClass={{exec}}
+Icon={{icon}}
+Name=Miyu
+Terminal=false
+Type=Application

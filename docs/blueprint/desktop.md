@@ -31,6 +31,7 @@
 | `src/text.rs`、`resources/text/{zh,en,ja}.toml` | 给人看的字 |
 | `icons/` | 应用图标、托盘图标；`icons/source/` 是原图 `logo.png`、两份矢量稿和出图的脚本 `build.sh`（施工 DT-5：换图重跑） |
 | `.github/workflows/ci.yml` | 三平台：格式、clippy、测试、行数、正式版的程序（试验用） |
+| `pins.toml`、`packaging/`、`.github/workflows/release.yml` | 打安装包：钉的核心和网页版本，搭内容的脚本，三个平台的打包配置，Windows 安装的钩子，AUR 的 PKGBUILD 模板（施工 DT-6，「装在哪」） |
 
 ### 怎么走
 
@@ -56,15 +57,18 @@
 
 ### 装在哪
 
-三样放在一起，主程序找资源目录照核心的规矩（`MIYU_RESOURCES`，程序旁边的 `resources/`，上一级的 `share/miyu/`，上一级的 `Resources/miyu/`）：
+外壳和核心的三个程序放在一起：主程序 `miyu`、沙盒助手 `miyu-sandbox`、抽字的 `miyu-extract`（三个平台都带；语义模型 `miyu-embed` 不带，从软件源装；核心的主会话 2026-10-30 定）。主程序找资源目录照核心的规矩（`MIYU_RESOURCES`，程序旁边的 `resources/`，上一级的 `share/miyu/`，上一级的 `Resources/miyu/`）。资源目录是核心仓库的整份 `resources/`，加网页包的文件夹 `packages/miyu-webui/`（出厂层，`heads.toml` 定的发版位置）：清单补上 `version`、不写 `targets`，`web.json`、`matugen/`，`pages/` 是网页 `web-demo/` 里给浏览器的七样，程序 `miyu-web` 放在包文件夹的 `bin/` 里（`miyu web` 先找包文件夹的 `bin/`；网页的会话 2026-10-30 定）。
 
-| 平台 | 程序 | 资源目录（网页包在里面的 `packages/miyu-webui/`） |
+| 平台 | 程序 | 资源目录 |
 |---|---|---|
-| Linux（deb、rpm、AUR） | `/usr/bin/miyu-desktop`、`/usr/bin/miyu`、`/usr/bin/miyu-web` | `/usr/share/miyu/` |
-| macOS（`.app`，dmg） | `Miyu.app/Contents/MacOS/` 下三个 | `Miyu.app/Contents/Resources/miyu/`（核心 DT-4 上） |
-| Windows（NSIS） | 安装目录下三个 `.exe` | 安装目录下的 `resources/` |
+| Linux（deb、rpm、AUR） | `/usr/bin/` 下 `miyu-desktop`、`miyu`、`miyu-sandbox`、`miyu-extract` | `/usr/share/miyu/` |
+| macOS（`.app`，dmg） | `Miyu.app/Contents/MacOS/` 下四个 | `Miyu.app/Contents/Resources/miyu/`（核心 DT-4 上） |
+| Windows（NSIS） | 安装目录下四个 `.exe` | 安装目录下的 `resources\` |
 
-Linux 的包写依赖 `webkit2gtk-4.1`、`libayatana-appindicator`、`bubblewrap`，不自带。核心、网页软件用哪一版钉在这个仓库里（施工 DT-6）。Linux 上已经有 `miyu`、`miyu-web` 的包时，桌面端的包也可以只带外壳、照版本依赖那两个包，施工 DT-6 定。
+- Linux 的包写依赖 WebKitGTK 4.1、ayatana 的托盘库、`bubblewrap`，不自带。AUR 的包 `miyu-desktop-bin` 拆发版里的 deb，带了核心，和单独装的 `miyu` 冲突。
+- macOS 没签名，只做本机的临时签名（`signingIdentity` 是 `-`，Apple 芯片上不签就不让跑）；第一次打开照样要在「隐私与安全性」里放行。沙盒用系统的 Seatbelt，什么都不用装。
+- Windows 照 perMachine 装（提权）：装之前叫在跑的核心停，装完跑 `miyu sandbox setup` 建沙盒用户，卸之前叫核心停、跑 `miyu sandbox remove`；setup 失败不挡安装，原话留在安装日志里（`packaging/windows/hooks.nsh`；设计 11 A3）。
+- 核心、网页软件用哪一版钉在 `pins.toml`（完整的提交号）；发版的流水线 `.github/workflows/release.yml` 照它编、`packaging/stage.py` 搭内容、Tauri 打包（`packaging/<平台>.json`），用包里的 `miyu --version` 试一下起得来，钉的提交号写进发版说明。
 
 ### 给人看的字
 

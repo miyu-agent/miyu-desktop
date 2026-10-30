@@ -1,0 +1,15 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "Utility",
+    "license": "AGPL-3.0-or-later",
+    "homepage": "https://github.com/miyu-agent/miyu-desktop",
+    "externalBin": ["dist/binaries/miyu", "dist/binaries/miyu-sandbox", "dist/binaries/miyu-extract"],
+    "resources": { "dist/resources/": "miyu/" },
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "12.0"
+    }
+  }
+}

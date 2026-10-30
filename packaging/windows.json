@@ -1,0 +1,20 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "category": "Utility",
+    "publisher": "miyu-agent",
+    "license": "AGPL-3.0-or-later",
+    "homepage": "https://github.com/miyu-agent/miyu-desktop",
+    "externalBin": ["dist/binaries/miyu", "dist/binaries/miyu-sandbox", "dist/binaries/miyu-extract"],
+    "resources": { "dist/resources/": "resources/" },
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["SimpChinese", "English", "Japanese"],
+        "displayLanguageSelector": false,
+        "installerHooks": "packaging/windows/hooks.nsh"
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "category": "Utility",
+    "shortDescription": "Miyu, an AI companion that works on your computer",
+    "longDescription": "Miyu desktop: the Miyu web interface in a window, with a tray icon. Includes the Miyu core and web app.",
+    "license": "AGPL-3.0-or-later",
+    "homepage": "https://github.com/miyu-agent/miyu-desktop",
+    "externalBin": [
+      "dist/binaries/miyu",
+      "dist/binaries/miyu-sandbox",
+      "dist/binaries/miyu-extract"
+    ],
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libayatana-appindicator3-1",
+          "bubblewrap"
+        ],
+        "files": {
+          "/usr/share/miyu": "dist/resources"
+        },
+        "desktopTemplate": "packaging/linux/miyu-desktop.desktop"
+      },
+      "rpm": {
+        "depends": [
+          "webkit2gtk4.1",
+          "libayatana-appindicator-gtk3",
+          "bubblewrap"
+        ],
+        "files": {
+          "/usr/share/miyu": "dist/resources"
+        },
+        "desktopTemplate": "packaging/linux/miyu-desktop.desktop"
+      }
+    }
+  },
+  "productName": "miyu-desktop"
+}
