@@ -28,6 +28,14 @@ url = "2"
 webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 glib = "0.18"
 
+# Windows、macOS 的系统通知（施工 DT-8）：页面里的 Notification 换成外壳的替身，外壳照这两个弹，点了把窗口拿回来。Linux 照旧走
+# WebKitGTK 自己的通知（上面）。
+[target.'cfg(windows)'.dependencies]
+tauri-winrt-notification = "=0.8.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mac-notification-sys = "=0.6.15"
+
 [lints.rust]
 unsafe_code = "forbid"
 # 不吞错误：必须处理的返回值不许不理。

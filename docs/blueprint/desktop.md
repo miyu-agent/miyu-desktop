@@ -40,13 +40,12 @@
 3. **开窗口**：先建窗口（标题 `Miyu`，大小、位置照上次的，`tauri-plugin-window-state`；第一次照主屏的七成五、不小于 1100×760、不超过屏幕的九成，居中（项目主人 2026-10-30：1200×800 在大屏幕上左栏显得太宽）；量不出主屏的 1200×800），网页视图先空着；调 `miyu web --print --format json --ticket`（不开控制台窗口：Windows 上 `CREATE_NO_WINDOW`；最多等 30 秒），拿到网址就导航过去。每次新开窗口现要一次，不存网址、不存票：票一次性，页面用票连上以后自己在这个网页视图里存设备令牌，刷新照它进。
    - 退出码非 0、超时、读不出那一行的：弹对话框，头一句「打不开 Miyu 的页面。」，下面是 `miyu` 标准错误的最后几行（照它的语言）或者超时、读不懂的一句，两个按钮「重试」「退出」。「退出」只退外壳，不叫核心停。
 4. **网页视图的数据**（`localStorage` 里的设备令牌、缓存）放在外壳自己的数据目录（Tauri 的 `data_directory`，在应用标识 `io.github.miyu-agent.desktop` 的目录下），不放进 Miyu 的数据根；卸载外壳不动数据根。
-5. **页面能碰到的外壳**：没有。不开 Tauri 的进程间通道给远程来源的页面（`capabilities` 里不列 `http://127.0.0.1`），页面里没有 `window.__TAURI__`；不装 opener 插件（它默认接管 `target=_blank` 的点击，DT-1 碰到过），开系统的浏览器直接用 `open` 这个 crate。页面要的东西都照浏览器的写法写，外壳在网页视图外面接住（下面 6 到 9）。要页面多给什么，找网页加在 `served.js` 里，不在外壳里开口子。
+5. **页面能碰到的外壳**：只有一条命令 `notify`（系统通知的替身用，第 8 条；项目主人 2026-10-31 定）。`capabilities/page-notify.json` 只给主窗口里 `http://127.0.0.1:*` 的页面、只在 Windows、macOS 上、只有 `allow-notify` 这一项，`tauri.conf.json` 只打开这一份能力；不开 `withGlobalTauri`，页面自己的代码里没有 `window.__TAURI__`。不装 opener 插件（它默认接管 `target=_blank` 的点击，DT-1 碰到过），开系统的浏览器直接用 `open` 这个 crate。页面要的别的东西都照浏览器的写法写，外壳在网页视图外面接住（下面 6 到 9）；要页面多给什么，找网页加在 `served.js` 里，不在外壳里开口子。往这个口子里加东西先改这一条、找项目主人；测试 `src/notify/tests.rs` 守着。
 6. **导航**（`on_navigation`）：和页面同一个来源（同协议、同主机、同口子）的放行；`about:blank`、`blob:`、`data:` 照网页视图自己的规矩；别的一律不在窗口里开，交给系统的浏览器（`http`、`https`、`mailto`），别的协议不开。**新窗口**（`target=_blank`、`window.open`，`on_new_window`）同一条：同来源的也交系统浏览器（桌面端一个窗口一份状态，网页的「页面自己守的」第 4 条）。
 7. **下载**（`on_download`）：照网页视图给的建议文件名存进系统的「下载」目录，重名的加「 (1)」「 (2)」；没有名字的叫 `download`。存完不弹东西（和浏览器一样，下载的东西在「下载」目录里）。
-8. **通知**：页面自己照网页的规矩弹（网页 `web.md` 第 560 行一节，`src/host/notify.js`），外壳只管网页视图给不给这个权限：
-   - Linux（WebKitGTK）：默认直接拒，外壳接 webkit2gtk 的 `permission-request`，通知的放行，别的（定位、摄像头、麦克风……）一律拒。
-   - Windows（WebView2）、macOS（WKWebView，没有 `Notification` 这个接口）：施工 DT-3 照平台的试验包看，接不住的找网页在 `served.js` 里加。
-   - 点了通知：窗口拿出来、放到最前（平台给这个事件的才做）。
+8. **通知**：页面自己照网页的规矩决定什么时候弹（网页 `web.md`「系统通知」，`src/host/notify.js`），外壳让它弹得出来、点了把窗口拿回来（施工 DT-8）：
+   - Linux（WebKitGTK）：网页视图自己的通知。外壳接 webkit2gtk 的 `permission-request`，通知的放行，别的（定位、摄像头、麦克风……）一律拒；接 `show-notification`，点了拿回窗口。弹不弹得出来看桌面有没有通知服务。
+   - Windows（WebView2 默认拒绝网页通知的权限）、macOS（WKWebView 没有 `Notification`）：外壳往页面里放一个 `Notification` 的替身（`resources/notification.js`，`initialization_script`）：权限一律 `granted`，`new Notification(标题, {body})` 调命令 `notify`，外壳照应用标识弹系统的通知（Windows 的 toast，MSI 的快捷方式带同一个 AppUserModelID；macOS 的通知中心，第一次系统问要不要让 Miyu 发通知）；点了拿回窗口，再叫页面里那一条的 `onclick`。页面的代码不用改。
 9. **剪贴板**：照网页视图自己的（`navigator.clipboard`，DT-1 在 Linux 上试过能写）。macOS 上外壳要有带「编辑」那一栏的应用菜单，不然 `⌘C`、`⌘V` 在网页视图里不起作用（Tauri 默认的菜单有）。
 10. **关窗口**：拦下关闭，窗口藏起来，网页视图留着：页面照旧连着核心、照旧收推送、照旧自己弹通知（DT-1：藏着时 `document.hidden` 为真，动画不跑）。macOS 上点程序坞的图标（`Reopen`）把窗口拿回来。
 11. **托盘**：Linux、Windows 用带浅色底板的小图标（深浅任务栏都看得见）；macOS 用单色模板图，系统照菜单栏着色。菜单两项：「显示 Miyu」「退出」。Windows、macOS 左键点图标同「显示 Miyu」；Linux 只有菜单（托盘库在 Linux 上收不到图标的点击）。拿出窗口：显示、取消最小化、放到最前。

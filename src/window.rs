@@ -59,6 +59,9 @@ pub fn create(
     if let Some(data) = data {
         builder = builder.data_directory(data);
     }
+    if let Some(script) = notify::STAND_IN {
+        builder = builder.initialization_script(script);
+    }
     if let Some(args) = browser_args(std::env::var("MIYU_DESKTOP_DEBUG_PORT").ok().as_deref()) {
         log::line(&format!(
             "webview debugging port open for diagnostics: {args}"

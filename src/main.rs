@@ -39,7 +39,10 @@ fn main() {
                 .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
                 .build(),
         )
-        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_dialog::init());
+    #[cfg(any(windows, target_os = "macos"))]
+    let built = built.invoke_handler(tauri::generate_handler![notify::notify]);
+    let built = built
         .on_menu_event(move |app, event| match event.id().as_ref() {
             tray::SHOW => window::bring_back(app),
             tray::QUIT => quit::everything(app, on_menu.clone()),

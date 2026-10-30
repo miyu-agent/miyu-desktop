@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "page-notify",
+  "description": "网页软件给的页面只能调外壳的 notify（系统通知的替身，施工 DT-8），别的命令、插件一概不给。只在 Windows、macOS 上有替身。",
+  "windows": ["main"],
+  "platforms": ["windows", "macOS"],
+  "remote": { "urls": ["http://127.0.0.1:*"] },
+  "permissions": ["allow-notify"]
+}
