@@ -10,7 +10,9 @@
     nsExec::ExecToLog '"$INSTDIR\miyu.exe" core stop'
     Pop $0
   DetailPrint "stop programs under $INSTDIR"
-  nsExec::ExecToLog `powershell -NoProfile -NonInteractive -Command "Get-Process miyu-web,miyu,miyu-extract,miyu-sandbox -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like '$INSTDIR\*' } | ForEach-Object { 'stop ' + $$_.Id + ' ' + $$_.Path; Stop-Process -Id $$_.Id -Force }"`
+  ; 安装程序是 32 位的，拉起的 PowerShell 也是 32 位：Get-Process 读不到 64 位进程的 Path（空的），照 WMI 的 ExecutablePath 认
+  ; （2026-10-30 虚拟机上第一版钩子什么都没停掉）。
+  nsExec::ExecToLog `powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.ExecutablePath -like '$INSTDIR\*' } | ForEach-Object { 'stop ' + $$_.ProcessId + ' ' + $$_.ExecutablePath; Stop-Process -Id $$_.ProcessId -Force }"`
   Pop $0
 !macroend
 
