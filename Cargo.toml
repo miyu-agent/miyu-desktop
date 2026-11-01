@@ -36,12 +36,19 @@ tauri-winrt-notification = "=0.8.1"
 [target.'cfg(target_os = "macos")'.dependencies]
 mac-notification-sys = "=0.6.15"
 
-[lints.rust]
+[lints]
+workspace = true
+
+# 门禁的小程序 `cargo xtask`（施工 DT-7：许可证）和外壳同一个工作区，同一份检查。
+[workspace]
+members = ["xtask"]
+
+[workspace.lints.rust]
 unsafe_code = "forbid"
 # 不吞错误：必须处理的返回值不许不理。
 unused_must_use = "deny"
 
-[lints.clippy]
+[workspace.lints.clippy]
 # 不吞错误：不许用 `let _ =` 或 `.ok()` 把错误悄悄扔掉。真要扔，写 #[expect(..., reason = "...")]。
 let_underscore_must_use = "deny"
 unused_result_ok = "deny"

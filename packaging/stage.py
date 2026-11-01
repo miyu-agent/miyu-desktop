@@ -2,6 +2,7 @@
 # 搭安装包的内容（施工 DT-6，蓝图 desktop.md「装在哪」）：核心、网页软件编好以后，照 Tauri 打包要的样子放进 dist/。
 #   dist/binaries/<程序>-<目标三元组>[.exe]  Tauri 的 externalBin：装在外壳旁边，名字去掉三元组
 #   dist/resources/                         核心仓库的整份 resources/，加网页包的文件夹 packages/miyu-webui/
+#   dist/resources/licenses/                外壳、核心、网页三份许可证和第三方许可证清单（施工 DT-7）
 #   dist/pins.txt                           钉的两个提交号，写进发版说明
 # 网页包的文件夹照网页仓库 tools/pack-web.py 装好的样子（网页的会话 2026-10-30 定）：清单补 version、不写 targets，
 # web.json、matugen/ 原样，pages/ 是 web-demo 里给浏览器的七样，程序放 bin/。
@@ -56,6 +57,41 @@ def stage_pwsh(pin, triple, dest):
     print(f'PowerShell {version} win-{arch} -> {dest}')
 
 
+LICENSES_README = """Licenses of the software in this Miyu package.
+
+miyu-desktop/   the desktop shell: LICENSE (AGPL-3.0-or-later) and THIRD-PARTY-LICENSES.txt
+miyu/           the core (miyu, miyu-sandbox, miyu-extract and resources): LICENSE (AGPL-3.0-or-later),
+                LICENSES/ (Apache-2.0 for the parts listed in the core's README) and THIRD-PARTY-LICENSES.txt
+miyu-web/       the web app (packages/miyu-webui): LICENSE and THIRD-PARTY-LICENSES.txt
+"""
+
+PWSH_NOTE = """
+Windows only: PowerShell 7 is bundled in ../pwsh/ with its own LICENSE.txt and ThirdPartyNotices.txt.
+"""
+
+
+def stage_licenses(desktop, core, web, triple, dest):
+    """三份许可证和第三方许可证清单放进资源目录的 licenses/（施工 DT-7）：缺一份就停，不出没有清单的包。"""
+    parts = {
+        'miyu-desktop': (desktop, ['LICENSE', 'THIRD-PARTY-LICENSES.txt']),
+        'miyu': (core, ['LICENSE', 'THIRD-PARTY-LICENSES.txt', 'LICENSES']),
+        'miyu-web': (web, ['LICENSE', f'{WEB_PACKAGE}/THIRD-PARTY-LICENSES.txt']),
+    }
+    for part, (root, names) in parts.items():
+        for name in names:
+            src = root / name
+            target = dest / part / pathlib.Path(name).name
+            if src.is_dir():
+                shutil.copytree(src, target)
+            elif src.is_file():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, target)
+            else:
+                sys.exit(f'少了 {src}：安装包要带它（施工 DT-7）')
+    readme = LICENSES_README + (PWSH_NOTE if 'windows' in triple else '')
+    (dest / 'README.txt').write_text(readme, encoding='utf-8')
+
+
 def main():
     ap = argparse.ArgumentParser(description='搭桌面端安装包的内容')
     ap.add_argument('--core', required=True, type=pathlib.Path, help='核心的检出，已经编过 release')
@@ -87,7 +123,7 @@ def main():
     (package / 'package.toml').write_text(manifest, encoding='utf-8')
     shutil.copy2(source / 'web.json', package / 'web.json')
     shutil.copytree(source / 'matugen', package / 'matugen')
-    # 网页包根上的这几个有就带：桌面端的等待页（W-1032）、第三方许可证清单（DT-7）。
+    # 网页包根上的这几个有就带：桌面端的等待页（W-1032）、第三方许可证清单（DT-7；licenses/ 里那份缺了就停）。
     for name in ('loading.html', 'THIRD-PARTY-LICENSES.txt'):
         if (source / name).is_file():
             shutil.copy2(source / name, package / name)
@@ -102,7 +138,9 @@ def main():
             sys.exit(f'网页少了 {page}')
     copy_program(args.web_built or args.web / 'target' / 'release', 'miyu-web', exe, package / 'bin' / f'miyu-web{exe}')
 
-    pins = tomllib.loads((pathlib.Path(__file__).resolve().parent.parent / 'pins.toml').read_text(encoding='utf-8'))
+    desktop = pathlib.Path(__file__).resolve().parent.parent
+    stage_licenses(desktop, args.core, args.web, args.triple, resources / 'licenses')
+    pins = tomllib.loads((desktop / 'pins.toml').read_text(encoding='utf-8'))
     if 'windows' in args.triple:
         stage_pwsh(pins['pwsh'], args.triple, resources / 'pwsh')
     (out / 'pins.txt').write_text(

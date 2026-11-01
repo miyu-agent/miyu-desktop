@@ -30,7 +30,8 @@
 | `src/notify.rs`、`src/notify/`（一个网页视图一份） | 网页视图的通知权限 |
 | `src/text.rs`、`resources/text/{zh,en,ja}.toml` | 给人看的字 |
 | `icons/` | 应用图标、托盘图标；`icons/source/` 是原图 `logo.png`、两份矢量稿和出图的脚本 `build.sh`（施工 DT-5：换图重跑） |
-| `.github/workflows/ci.yml` | 三平台：格式、clippy、测试、行数、正式版的程序（试验用） |
+| `.github/workflows/ci.yml` | 三平台：格式、clippy、测试、行数、正式版的程序（试验用）；Linux 上再跑 `cargo xtask check`（许可证） |
+| `xtask/`、`.cargo/config.toml`、`THIRD-PARTY-LICENSES.txt` | 门禁的「许可证」一项（施工 DT-7，照核心的 `licenses.rs`、`notices.rs`）：三个平台上编进外壳的第三方依赖，许可证都能和 AGPL-3.0-or-later 合在一起发；外壳的第三方许可证清单是最新的。`cargo xtask notices` 重新生成清单，升了、加了依赖的那一步跟着跑，和代码进同一个提交 |
 | `pins.toml`、`packaging/`、`.github/workflows/release.yml` | 打安装包：钉的核心和网页版本，搭内容的脚本，三个平台的打包配置，Windows 安装包的自定义步骤，AUR 的 PKGBUILD 模板（施工 DT-6，「装在哪」） |
 
 ### 怎么走
@@ -68,6 +69,7 @@
 - Linux 的包写依赖 WebKitGTK 4.1、ayatana 的托盘库、`bubblewrap`，不自带。AUR 的包 `miyu-desktop-bin` 拆发版里的 deb，带了核心，和单独装的 `miyu` 冲突。
 - macOS 的资源目录照 `bundle.macOS.files` 放进 `Contents/Resources/miyu/`（不能用 `resources`：编的时候它也拷进 `target/release/miyu/`，和外壳旁边的程序 `miyu` 撞名）。没签名，只做本机的临时签名（`signingIdentity` 是 `-`，Apple 芯片上不签就不让跑）；第一次打开照样要在「隐私与安全性」里放行。沙盒用系统的 Seatbelt，什么都不用装。
 - Windows 出 64 位的 MSI（WiX，x64；项目主人 2026-10-30 定安装程序也要 64 位，NSIS 只有 32 位），中、英、日各一个，照 perMachine 装进 `Program Files\Miyu\`，安装目录进 PATH。装、卸、修之前先 `miyu core stop`，再用 64 位的 PowerShell 照路径结束安装目录下还在跑的程序（`packaging/windows/miyu.wxs`）。沙盒不用配：MXC 跑命令不要沙盒用户、不要管理员（核心的主会话 2026-10-30）。`upgradeCode` 钉死在 `packaging/windows.json`，换了就升级不了。
+- 许可证（施工 DT-7）：资源目录下的 `licenses/` 放三份，各是那个仓库根上的 `LICENSE` 和第三方许可证清单 `THIRD-PARTY-LICENSES.txt`：`miyu-desktop/`（外壳，AGPL-3.0-or-later）、`miyu/`（核心，AGPL-3.0-or-later，另带 `LICENSES/`：核心里几处用 Apache-2.0）、`miyu-web/`（网页，清单照网页包里的那份）；`README.txt` 说哪个目录是谁的。Windows 的 `pwsh\` 里原样留着 PowerShell 自己的 `LICENSE.txt`、`ThirdPartyNotices.txt`。缺一份打包就停（`packaging/stage.py`）。外壳清单里 MPL-2.0 的包写上它在 crates.io 上的源码地址（MPL 第 3.2 条）。
 - 核心、网页软件用哪一版钉在 `pins.toml`（完整的提交号）；发版的流水线 `.github/workflows/release.yml` 照它编、`packaging/stage.py` 搭内容、Tauri 打包（`packaging/<平台>.json`），用包里的 `miyu --version` 试一下起得来，钉的提交号写进发版说明。
 
 ### 给人看的字

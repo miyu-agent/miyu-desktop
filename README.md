@@ -11,4 +11,4 @@
 
 ### 许可证
 
-AGPL-3.0-or-later，见 [`LICENSE`](LICENSE)。
+AGPL-3.0-or-later，见 [`LICENSE`](LICENSE)。编进外壳的第三方包的版权和许可证原文见 [`THIRD-PARTY-LICENSES.txt`](THIRD-PARTY-LICENSES.txt)（`cargo xtask notices` 生成）；安装包的资源目录下 `licenses/` 里放外壳、核心、网页三份。

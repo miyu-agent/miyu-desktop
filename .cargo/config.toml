@@ -1,0 +1,3 @@
+[alias]
+# cargo xtask check：跑完门禁里 cargo 自己不管的几项，见 xtask/src/main.rs。
+xtask = "run --quiet --package xtask --"

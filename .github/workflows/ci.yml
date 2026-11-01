@@ -1,4 +1,4 @@
-# 三平台 CI（照网页仓库的那一份）：格式、clippy、测试、行数。Linux 先装 Tauri 要的系统库（WebKitGTK、托盘）。
+# 三平台 CI（照网页仓库的那一份）：格式、clippy、测试、行数、许可证。Linux 先装 Tauri 要的系统库（WebKitGTK、托盘）。
 name: CI
 
 on:
@@ -35,15 +35,18 @@ jobs:
       - name: 格式
         run: cargo fmt --check
       - name: clippy
-        run: cargo clippy --all-targets --locked -- -D warnings
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: 测试
-        run: cargo test --locked --no-fail-fast
+        run: cargo test --workspace --locked --no-fail-fast
       - name: 行数（每个 .rs 不超过 500 行，测试也算）
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          over=$(find src -name '*.rs' -print0 | xargs -0 wc -l | awk '$2 != "total" && $1 > 500 {print}')
+          over=$(find src xtask/src -name '*.rs' -print0 | xargs -0 wc -l | awk '$2 != "total" && $1 > 500 {print}')
           if [ -n "$over" ]; then echo "超过 500 行：" && echo "$over" && exit 1; fi
+      - name: 许可证（依赖的许可证能和 AGPL 合在一起发，第三方许可证清单是最新的；施工 DT-7）
+        if: runner.os == 'Linux'
+        run: cargo xtask check
       - name: 正式版（试验用，收下程序手测）
         run: cargo build --release --locked
       - uses: actions/upload-artifact@v4
