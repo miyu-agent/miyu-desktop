@@ -228,7 +228,8 @@ pub(crate) fn texts(package: &Shipped) -> Result<Vec<String>, String> {
         .collect()
 }
 
-/// 没带许可证文件的包：`license` 里出现的、[`STANDARD`] 有原文的那几种，版权行写作者。一种都没有的是空的。
+/// 没带许可证文件的包：`license` 里出现的、[`STANDARD`] 有原文的那几种，版权行写作者。一种都没有的是空的。换行统一成
+/// `\n`：Windows 上 git 检出时可能把那几份原文换成 CRLF（2026-11-01 CI 撞上）。
 fn standard(package: &Shipped) -> Option<Vec<String>> {
     let license = package.license.as_deref()?;
     let named: BTreeSet<&str> = license
@@ -242,7 +243,12 @@ fn standard(package: &Shipped) -> Option<Vec<String>> {
     let found: Vec<String> = STANDARD
         .iter()
         .filter(|(id, _)| named.contains(id))
-        .map(|(_, text)| text.replace("{authors}", &authors).trim_end().to_string())
+        .map(|(_, text)| {
+            text.replace("\r\n", "\n")
+                .replace("{authors}", &authors)
+                .trim_end()
+                .to_string()
+        })
         .collect();
     (!found.is_empty()).then_some(found)
 }
